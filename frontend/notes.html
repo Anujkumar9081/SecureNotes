@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NoteVault — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      min-height: 100vh;
+      background: linear-gradient(180deg, #f8f9fc 0%, #eef1f8 100%);
+      color: #1a1a2e;
+    }
+
+    /* navbar */
+    .navbar {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 48px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid rgba(0,0,0,0.06);
+      animation: slideDown 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes slideDown {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .nav-logo {
+      font-size: 20px;
+      font-weight: 700;
+      letter-spacing: -0.3px;
+      color: #1a1a2e;
+    }
+
+    .nav-logo .accent { color: #7c3aed; }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .nav-badge {
+      padding: 6px 14px;
+      font-size: 11px;
+      font-weight: 600;
+      color: #7c3aed;
+      background: rgba(124,58,237,0.08);
+      border-radius: 20px;
+      letter-spacing: 0.5px;
+    }
+
+    .nav-btn {
+      padding: 8px 18px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      background: transparent;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .nav-btn:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+    }
+
+    /* main layout */
+    .main {
+      display: flex;
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 36px 48px;
+      gap: 36px;
+      animation: fadeIn 0.6s ease both;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    /* notes panel */
+    .notes-panel {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+    }
+
+    .panel-header h2 {
+      font-size: 22px;
+      font-weight: 700;
+      color: #1a1a2e;
+      letter-spacing: -0.3px;
+    }
+
+    .panel-header .count {
+      font-size: 12px;
+      color: #9ca3af;
+      font-weight: 500;
+    }
+
+    .notes-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .note-card {
+      padding: 18px 22px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 14px;
+      font-size: 14px;
+      line-height: 1.65;
+      color: #374151;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      animation: noteSlide 0.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+      cursor: default;
+    }
+
+    .note-card:hover {
+      transform: translateX(6px);
+      border-color: rgba(124,58,237,0.2);
+      box-shadow: 0 4px 16px rgba(124,58,237,0.08);
+      background: #fff;
+    }
+
+    @keyframes noteSlide {
+      from { opacity: 0; transform: translateY(12px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 24px;
+      color: #9ca3af;
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+
+    .empty-state h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 6px;
+    }
+
+    .empty-state p {
+      font-size: 13px;
+    }
+
+    /* compose panel */
+    .compose-panel {
+      width: 340px;
+      min-width: 340px;
+      position: sticky;
+      top: 100px;
+      align-self: flex-start;
+    }
+
+    .compose-card {
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(0,0,0,0.06);
+      border-radius: 18px;
+      padding: 28px;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.2s both;
+    }
+
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    .compose-card h3 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #1a1a2e;
+      margin-bottom: 18px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .compose-card h3 span {
+      font-size: 18px;
+    }
+
+    .compose-input {
+      width: 100%;
+      padding: 14px 16px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: #1a1a2e;
+      background: #f8f9fc;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      outline: none;
+      transition: all 0.3s;
+      margin-bottom: 14px;
+    }
+
+    .compose-input::placeholder { color: #9ca3af; }
+
+    .compose-input:focus {
+      border-color: #7c3aed;
+      box-shadow: 0 0 0 4px rgba(124,58,237,0.06);
+      background: #fff;
+    }
+
+    .btn-create {
+      width: 100%;
+      padding: 14px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 600;
+      color: #fff;
+      background: linear-gradient(135deg, #7c3aed 0%, #6366f1 100%);
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.3s;
+      letter-spacing: 0.3px;
+    }
+
+    .btn-create:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(124,58,237,0.3);
+    }
+
+    .btn-create:active { transform: translateY(0); }
+
+    .btn-danger {
+      width: 100%;
+      padding: 12px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+      color: #9ca3af;
+      background: transparent;
+      border: 1.5px solid #e5e7eb;
+      border-radius: 12px;
+      cursor: pointer;
+      margin-top: 10px;
+      transition: all 0.3s;
+    }
+
+    .btn-danger:hover {
+      border-color: #ef4444;
+      color: #ef4444;
+      background: rgba(239,68,68,0.03);
+    }
+
+    /* tip card */
+    .tip-card {
+      margin-top: 16px;
+      padding: 18px 20px;
+      background: linear-gradient(135deg, rgba(124,58,237,0.05), rgba(59,130,246,0.05));
+      border: 1px solid rgba(124,58,237,0.1);
+      border-radius: 14px;
+      animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.4s both;
+    }
+
+    .tip-card p {
+      font-size: 12px;
+      color: #6b7280;
+      line-height: 1.6;
+    }
+
+    .tip-card p strong {
+      color: #7c3aed;
+    }
+
+    /* footer */
+    .footer {
+      text-align: center;
+      padding: 24px;
+      font-size: 11px;
+      color: #9ca3af;
+      letter-spacing: 0.3px;
+    }
+
+    .footer span { color: #7c3aed; font-weight: 600; }
+
+    @media (max-width: 768px) {
+      .main {
+        flex-direction: column-reverse;
+        padding: 20px;
+      }
+      .compose-panel {
+        width: 100%;
+        min-width: auto;
+        position: static;
+      }
+      .navbar { padding: 14px 20px; }
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-logo">&#128221; Note<span class="accent">Vault</span></div>
+    <div class="nav-actions">
+      <span class="nav-badge">&#128994; Authenticated</span>
+      <button class="nav-btn" onclick="localStorage.removeItem('token'); window.location.href='/signup.html'">Logout</button>
+    </div>
+  </nav>
+
+  <div class="main">
+    <div class="notes-panel">
+      <div class="panel-header">
+        <h2>My Notes</h2>
+        <span class="count">Loading...</span>
+      </div>
+      <div class="notes-grid left">
+        <div class="empty-state">
+          <div class="icon">&#128466;</div>
+          <h3>Loading your notes...</h3>
+          <p>Please wait while we fetch your notes.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="compose-panel">
+      <div class="compose-card">
+        <h3><span>&#9998;</span> Compose Note</h3>
+        <input type="text" class="compose-input" placeholder="Write something brilliant...">
+        <button class="btn-create" id="create">&#10133; Create Note</button>
+        <button class="btn-danger" id="remove">&#128465; Clear All Notes</button>
+      </div>
+      <div class="tip-card">
+        <p><strong>&#128161; Pro Tip:</strong> Keep notes short and focused. One idea per note helps you stay organized and find things faster.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    Built with <span>Node.js</span> &middot; Express &middot; JWT Authentication
+  </div>
+
+  <script>
+    // Fetch and display notes
+    async function abc(){
+      try {
+        const responce = await axios.get("http://localhost:3000/notes", {
+          headers: {
+            token: localStorage.getItem("token")
+          }
+        });
+        const data = await responce.data;
+        const notesGrid = document.querySelector(".left");
+        notesGrid.textContent = "";
+
+        if(data.notes.length === 0) {
+          notesGrid.innerHTML = '<div class="empty-state"><div class="icon">&#128196;</div><h3>No notes yet</h3><p>Create your first note to get started!</p></div>';
+        }
+
+        document.querySelector(".count").textContent = data.notes.length + " notes";
+
+        for(let i = 0; i < data.notes.length; i++){
+          const new_div = document.createElement("div");
+          new_div.className = "note-card";
+          new_div.style.animationDelay = (i * 0.05) + 's';
+          new_div.textContent = data.notes[i].note || data.notes[i];
+          notesGrid.appendChild(new_div);
+        }
+      } catch(err) {
+        const notesGrid = document.querySelector(".left");
+        notesGrid.innerHTML = '<div class="empty-state"><div class="icon">&#128274;</div><h3>Please sign in</h3><p>You need to be authenticated to view notes.</p></div>';
+      }
+    }
+    abc();
+
+    // Create note
+    document.querySelector("#create").addEventListener("click", async function(){
+      const inputVal = document.querySelector(".compose-input").value;
+      if(!inputVal.trim()) return;
+
+      await axios.post("http://localhost:3000/notes", { note: inputVal }, {
+        headers: {
+          token: localStorage.getItem("token")
+        }
+      });
+
+      document.querySelector(".compose-input").value = "";
+      abc();
+    });
+
+    // Delete all notes
+    document.querySelector("#remove").addEventListener("click", async function(){
+      try {
+        await axios.delete("http://localhost:3000/notes", {
+          headers: {
+            token: localStorage.getItem("token")
+          }
+        });
+        abc();
+      } catch(err) {
+        console.log("Error deleting notes:", err);
+      }
+    });
+  </script>
+</body>
+</html>
